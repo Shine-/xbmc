@@ -6844,7 +6844,10 @@ msgctxt "#14084"
 msgid "Queue songs on selection"
 msgstr ""
 
-#empty string with id 14085
+#: system/settings/settings.xml
+msgctxt "#14085"
+msgid "Always on top"
+msgstr ""
 
 #: system/settings/settings.xml
 msgctxt "#14086"
@@ -15944,7 +15947,11 @@ msgctxt "#36422"
 msgid "Enable hardware video decode using Amlogic decoder."
 msgstr ""
 
-#empty string with id 36423
+#. Description of setting "System -> Video output -> Always on top" with label #14085
+#: system/settings/settings.xml
+msgctxt "#36423"
+msgid "If enabled, Kodi will always stay on top of all other windows. It also won't minimize if you Alt-Tab or click into another window, or if another window pops up on its own."
+msgstr ""
 
 #: system/settings/settings.xml
 msgctxt "#36424"
