@@ -78,6 +78,15 @@ void CGraphicContext::OnSettingChanged(const CSetting *setting)
     if (IsFullScreenRoot())
       SetVideoResolution(GetVideoResolution(), true);
   }
+#if defined(TARGET_WINDOWS)
+  else if (settingId == "videoscreen.alwaysontop")
+  {
+    g_Windowing.SetAlwaysOnTopState(CSettings::Get().GetBool(settingId));
+    if (IsFullScreenRoot() && !CSettings::Get().GetBool("videoscreen.fakefullscreen"))
+      // Re-init fs mode (otherwise may throw DXGI_OCCLUDED)
+      SetVideoResolution(GetVideoResolution(), true);
+  }
+#endif
 }
 
 void CGraphicContext::SetOrigin(float x, float y)

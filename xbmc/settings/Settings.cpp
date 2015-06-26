@@ -774,6 +774,7 @@ void CSettings::InitializeISettingCallbacks()
 
   settingSet.clear();
   settingSet.insert("videoscreen.fakefullscreen");
+  settingSet.insert("videoscreen.alwaysontop");
   m_settingsManager->RegisterCallback(&g_graphicsContext, settingSet);
 
   settingSet.clear();

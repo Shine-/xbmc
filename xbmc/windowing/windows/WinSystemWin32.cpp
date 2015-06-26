@@ -110,12 +110,14 @@ bool CWinSystemWin32::CreateNewWindow(const std::string& name, bool fullScreen, 
     return false;
   }
 
-  HWND hWnd = CreateWindow( name.c_str(), name.c_str(), fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW,
+  HWND hWnd = CreateWindowEx(m_bAlwaysOnTop ? WS_EX_TOPMOST : NULL,
+    name.c_str(), name.c_str(),
+    fullScreen ? WS_POPUP : WS_OVERLAPPEDWINDOW,
     0, 0, m_nWidth, m_nHeight, 0,
     NULL, m_hInstance, userFunction );
   if( hWnd == NULL )
   {
-    CLog::Log(LOGERROR, "%s : CreateWindow failed with %d", __FUNCTION__, GetLastError());
+    CLog::Log(LOGERROR, "%s : CreateWindowEx failed with %d", __FUNCTION__, GetLastError());
     return false;
   }
 
@@ -718,5 +720,28 @@ bool CWinSystemWin32::Show(bool raise)
   }
   return true;
 }
+void CWinSystemWin32::SetAlwaysOnTopState(bool bState)
+{
+  if (m_bAlwaysOnTop == bState)
+    return;
+  SetWindowPos(m_hWnd, bState ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOREDRAW);
+  CLog::Log(LOGDEBUG, "%s : Always-On-Top mode is now: %s", __FUNCTION__, bState ? "ENABLED" : "DISABLED");
+  m_bAlwaysOnTop = bState;
+}
 
+void CWinSystemWin32::ForceWindowToTop(HWND hWnd)
+{
+  hWnd = hWnd ? hWnd : m_hWnd;
+  BYTE keyState[256] = { 0 };
+  // to unlock SetForegroundWindow we need to imitate Alt pressing
+  if (GetKeyboardState((LPBYTE)&keyState) && !(keyState[VK_MENU] & 0x80))
+    keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | 0, 0);
+
+  // SetForegroundWindow() is better than BringWindowToTop(), because it takes care of focus as well.
+  // We need focus in fs mode in order to be able to catch KillFocus events (from Alt-Tab etc.)
+  SetForegroundWindow(hWnd);
+
+  if (GetKeyboardState((LPBYTE)&keyState) && !(keyState[VK_MENU] & 0x80))
+    keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+}
 #endif

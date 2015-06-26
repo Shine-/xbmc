@@ -48,6 +48,9 @@ public:
 protected:
   virtual void UpdateMonitor();
   bool UseWindowedDX(bool fullScreen);
+
+private:
+  static BOOL CALLBACK RaiseProxyWindow(HWND hWnd, LPARAM btopmost);
 };
 
 XBMC_GLOBAL_REF(CWinSystemWin32DX,g_Windowing);
