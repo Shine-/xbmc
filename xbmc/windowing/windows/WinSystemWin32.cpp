@@ -88,6 +88,7 @@ bool CWinSystemWin32::CreateNewWindow(const std::string& name, bool fullScreen, 
   m_nHeight = res.iHeight;
   m_bFullScreen = fullScreen;
   m_nScreen = res.iScreen;
+  m_bAlwaysOnTop = CSettings::GetInstance().GetBool(CSettings::SETTING_VIDEOSCREEN_ALWAYSONTOP);
 
   m_hIcon = LoadIcon(m_hInstance, MAKEINTRESOURCE(IDI_MAIN_ICON));
 
@@ -400,20 +401,17 @@ bool CWinSystemWin32::ResizeInternal(bool forceRefresh)
   if (m_hWnd == NULL)
     return false;
   DWORD dwStyle = WS_CLIPCHILDREN;
-  HWND windowAfter;
+  HWND windowAfter = m_bAlwaysOnTop ? HWND_TOPMOST : HWND_TOP;
   RECT rc;
 
   if(m_bFullScreen)
   {
     dwStyle |= WS_POPUP;
-    windowAfter = HWND_TOP;
     rc = ScreenRect(m_nScreen);
   }
   else
   {
     dwStyle |= WS_OVERLAPPEDWINDOW;
-    windowAfter = g_advancedSettings.m_alwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST;
-
     rc.left = m_nLeft;
     rc.right = m_nLeft + m_nWidth;
     rc.top = m_nTop;
@@ -769,7 +767,7 @@ bool CWinSystemWin32::Show(bool raise)
     if (m_bFullScreen)
       windowAfter = HWND_TOP;
     else
-      windowAfter = g_advancedSettings.m_alwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST;
+      windowAfter = m_bAlwaysOnTop ? HWND_TOPMOST : HWND_TOP;
   }
 
   SetWindowPos(m_hWnd, windowAfter, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_SHOWWINDOW);
