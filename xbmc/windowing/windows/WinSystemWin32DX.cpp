@@ -23,6 +23,7 @@
 #include "settings/Settings.h"
 #include "guilib/gui3d.h"
 #include "utils/CharsetConverter.h"
+#include "utils/log.h"
 
 #ifdef HAS_DX
 
@@ -103,18 +104,8 @@ bool CWinSystemWin32DX::SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, boo
     CRenderSystemDX::SetFullScreenInternal();
 
   if (!m_useWindowedDX)
-  {
     // if the window isn't focused, bring it to front or SetFullScreen will fail
-    BYTE keyState[256] = { 0 };
-    // to unlock SetForegroundWindow we need to imitate Alt pressing
-    if (GetKeyboardState((LPBYTE)&keyState) && !(keyState[VK_MENU] & 0x80))
-      keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | 0, 0);
-
-    BringWindowToTop(m_hWnd);
-
-    if (GetKeyboardState((LPBYTE)&keyState) && !(keyState[VK_MENU] & 0x80))
-      keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
-  }
+    ForceWindowToTop(m_hWnd);
 
   // to disable stereo mode in windowed mode we must recreate swapchain and then change display mode
   // so this flags delays call SetFullScreen _after_ resetting render system
@@ -131,7 +122,31 @@ bool CWinSystemWin32DX::SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, boo
     // now resize window and force changing resolution if stereo mode disabled
     CWinSystemWin32::SetFullScreenEx(fullScreen, res, blankOtherDisplays, !CRenderSystemDX::m_bHWStereoEnabled);
 
+  // Make the DXGI proxy window topmost. This helps against DXGI falling back to windowed mode
+  // if anything pops up behind Kodi or if a window is moved partially or fully behind Kodi
+  if (!m_useWindowedDX)
+    EnumWindows((WNDENUMPROC)RaiseProxyWindow, TRUE);
+
   return true;
+}
+
+BOOL CALLBACK CWinSystemWin32DX::RaiseProxyWindow(HWND hWnd, LPARAM btopmost)
+{
+  DWORD pid = 0;
+  GetWindowThreadProcessId(hWnd, &pid);
+  if (GetCurrentProcessId() == pid)
+  {
+    LPTSTR classname = new TCHAR[256];
+    GetClassName(hWnd, classname, 256);
+    if (!lstrcmp(classname, "DXGIFocusProxyWindow"))
+    {
+      CLog::Log(LOGDEBUG, "%s : Found DXGI Proxy window %#010x, PID %d - Setting topmost style %s", __FUNCTION__, hWnd, pid, btopmost ? "ON" : "OFF");
+      SetWindowPos(hWnd, btopmost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
+      delete classname;
+      return FALSE;
+    }
+  }
+  return TRUE;
 }
 
 std::string CWinSystemWin32DX::GetClipboardText(void)
