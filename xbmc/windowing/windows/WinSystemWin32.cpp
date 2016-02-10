@@ -817,9 +817,26 @@ void CWinSystemWin32::ForceWindowToTop(HWND hWnd)
 
   // SetForegroundWindow() is better than BringWindowToTop(), because it takes care of focus as well.
   // We need focus in fs mode in order to be able to catch KillFocus events (from Alt-Tab etc.)
-  SetForegroundWindow(hWnd);
+  BOOL res = SetForegroundWindow(hWnd);
 
   if (GetKeyboardState((LPBYTE)&keyState) && !(keyState[VK_MENU] & 0x80))
     keybd_event(VK_MENU, 0, KEYEVENTF_EXTENDEDKEY | KEYEVENTF_KEYUP, 0);
+
+  if (!res)
+  {
+    CLog::Log(LOGDEBUG, "%s : Method 1 (imitate Alt key) failed, trying method 2 (attach to foreground thread).", __FUNCTION__);
+
+    DWORD foregroundThread = GetWindowThreadProcessId(GetForegroundWindow(), NULL);
+    DWORD thisThread = GetCurrentThreadId();
+    BOOL isAttached = AttachThreadInput(foregroundThread, thisThread, TRUE);
+
+    res = SetForegroundWindow(hWnd);
+
+    if (!res)
+      CLog::Log(LOGWARNING, "%s : Failed to become foreground window.", __FUNCTION__);
+      
+    if (isAttached)
+      AttachThreadInput(foregroundThread, thisThread, FALSE);
+  }
 }
 #endif
