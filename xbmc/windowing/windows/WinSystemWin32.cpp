@@ -810,6 +810,7 @@ void CWinSystemWin32::SetAlwaysOnTopState(bool bState)
 void CWinSystemWin32::ForceWindowToTop(HWND hWnd)
 {
   hWnd = hWnd ? hWnd : m_hWnd;
+  CLog::Log(LOGDEBUG, "%s : Trying to bring main window %#010x to front.", __FUNCTION__, hWnd);
   BYTE keyState[256] = { 0 };
   // to unlock SetForegroundWindow we need to imitate Alt pressing
   if (GetKeyboardState((LPBYTE)&keyState) && !(keyState[VK_MENU] & 0x80))

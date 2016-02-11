@@ -42,6 +42,7 @@ public:
   virtual bool SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, bool blankOtherDisplays);
   virtual bool WindowedMode() { return CRenderSystemDX::m_useWindowedDX; }
   virtual void NotifyAppFocusChange(bool bGaining);
+  virtual void RaiseProxyWindow();
 
   std::string GetClipboardText(void);
 
@@ -50,7 +51,7 @@ protected:
   bool UseWindowedDX(bool fullScreen);
 
 private:
-  static BOOL CALLBACK RaiseProxyWindow(HWND hWnd, LPARAM btopmost);
+  static BOOL CALLBACK RaiseProxyWindowCallback(HWND hWnd, LPARAM phWnd);
 };
 
 XBMC_GLOBAL_REF(CWinSystemWin32DX,g_Windowing);

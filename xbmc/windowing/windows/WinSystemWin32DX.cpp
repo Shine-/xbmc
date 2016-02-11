@@ -125,12 +125,17 @@ bool CWinSystemWin32DX::SetFullScreen(bool fullScreen, RESOLUTION_INFO& res, boo
   // Make the DXGI proxy window topmost. This helps against DXGI falling back to windowed mode
   // if anything pops up behind Kodi or if a window is moved partially or fully behind Kodi
   if (!m_useWindowedDX)
-    EnumWindows((WNDENUMPROC)RaiseProxyWindow, TRUE);
+    RaiseProxyWindow();
 
   return true;
 }
 
-BOOL CALLBACK CWinSystemWin32DX::RaiseProxyWindow(HWND hWnd, LPARAM btopmost)
+void CWinSystemWin32DX::RaiseProxyWindow()
+{
+  EnumWindows((WNDENUMPROC)RaiseProxyWindowCallback, (LPARAM)m_hWnd);
+}
+
+BOOL CALLBACK CWinSystemWin32DX::RaiseProxyWindowCallback(HWND hWnd, LPARAM phWnd)
 {
   DWORD pid = 0;
   GetWindowThreadProcessId(hWnd, &pid);
@@ -140,8 +145,8 @@ BOOL CALLBACK CWinSystemWin32DX::RaiseProxyWindow(HWND hWnd, LPARAM btopmost)
     GetClassName(hWnd, classname, 256);
     if (!lstrcmp(classname, "DXGIFocusProxyWindow"))
     {
-      CLog::Log(LOGDEBUG, "%s : Found DXGI Proxy window %#010x, PID %d - Setting topmost style %s", __FUNCTION__, hWnd, pid, btopmost ? "ON" : "OFF");
-      SetWindowPos(hWnd, btopmost ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
+      CLog::Log(LOGDEBUG, "%s : Found DXGI Proxy window %#010x, PID %d - Positioning after main window %#010x.", __FUNCTION__, hWnd, pid, (HWND)phWnd);
+      SetWindowPos(hWnd, (HWND)phWnd, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW);
       delete classname;
       return FALSE;
     }
